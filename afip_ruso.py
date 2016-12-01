@@ -4,18 +4,24 @@ __author__ = 'JORGE RIBERI'
 
 
 class AFIP_RUSO:
-    _public_methods_ = ['getToken', 'getSign', 'crearFactura', 'agregarIVA', 'aprobar', 'getErrores', 'getObservaciones']
+    _public_methods_ = ['getToken', 'getSign', 'crearFactura', 'agregarIVA', 'aprobar', 'getErrores', 'getObservaciones', 'setCUIT', 'setProduccion']
     _public_attrs_ = ['CAE', 'vencimiento', 'aprobado']
     _reg_progid_ = "AFIP_RUSO"
     _reg_clsid_ = "{13CA094F-068E-446E-A0C9-4938263E5F8E}"
 
-    def __init__(self, produccion=False, CUIT=None):
-        self.CUIT = CUIT
-        self.produccion = produccion
+    def __init__(self):
+        self.CUIT = None
+        self.produccion = False
         self.wsfev1 = None
         self.CAE = self.vencimiento = None
         self.errores = self.observaciones = None
         self.aprobado = None
+
+    def setCUIT(self, cuit):
+        self.CUIT = cuit
+
+    def setProduccion(self, produccion):
+        self.produccion = produccion
 
     def getSign(self):
         return self.wsfev1.Sign
