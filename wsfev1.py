@@ -6,13 +6,13 @@ Según RG 2485/08, RG 2757/2010, RG 2904/2010 y RG2926/10 (CAE anticipado),
 RG 3067/2011 (RS - Monotributo), RG 3571/2013 (Responsables inscriptos IVA), 
 RG 3668/2014 (Factura A IVA F.8001), RG 3749/2015 (R.I. y exentos)
 """
-from wsaa import obtener_permiso
+import logging
+
+from wsaa import obtener_o_crear_permiso
+from base import WebServiceAFIP
 
 __author__ = "Jorge Riberi <jariberi@gmail.com>"
 
-from base import WebServiceAFIP
-
-LANZAR_EXCEPCIONES = False  # valor por defecto: True
 WSFEV1_URL_PROD = "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL"
 WSFEV1_URL_TEST = "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL"
 
@@ -22,55 +22,37 @@ class WSFEv1(WebServiceAFIP):
     # Variables globales para WebServiceAFIP:
     factura = None
 
-    def __init__(self, reintentos=1, produccion=False, CUIT=None):
-        WebServiceAFIP.__init__(self, reintentos)
+    def __init__(self, produccion=False):
+        WebServiceAFIP.__init__(self, produccion=produccion)
         self.produccion = produccion
-        self.Cuit = int(CUIT.replace("-", ""))
         if not self.Token or self.Sign:
-            permiso = obtener_permiso(produccion=produccion)
-            self.Token = permiso.Token
-            self.Sign = permiso.Sign
+            permiso = obtener_o_crear_permiso(produccion=produccion)
+            if permiso[0]:
+                self.Token = permiso[1].Token
+                self.Sign = permiso[1].Sign
+                self.ExpirationTime = permiso[1].ExpirationTime
         self.Errores = self.Observaciones = self.Eventos = []
 
     def resetearOperacion(self):
-        WebServiceAFIP.resetearOperacion(self)
         self.AppServerStatus = self.DbServerStatus = self.AuthServerStatus = None
-        self.Resultado = self.Motivo = self.Reproceso = ''
+        self.Resultado = ''
         self.LastID = self.LastCMP = self.CAE = self.CAEA = self.Vencimiento = ''
         self.CbteNro = self.CbtDesde = self.CbtHasta = self.PuntoVenta = None
         self.ImpTotal = self.ImpIVA = self.ImpOpEx = self.ImpNeto = self.ImptoLiq = self.ImpTrib = None
         self.EmisionTipo = self.Periodo = self.Orden = ""
         self.FechaCbte = self.FchVigDesde = self.FchVigHasta = self.FchTopeInf = self.FchProceso = ""
 
-    def __analizar_errores(self, ret):
-        "Comprueba y extrae errores si existen en la respuesta XML"
-        if 'Errors' in ret:
-            errores = ret['Errors']
-            for error in errores:
-                self.Errores.append("%s: %s" % (
-                    error['Err']['Code'],
-                    error['Err']['Msg'],
-                ))
-            self.ErrCode = ' '.join([str(error['Err']['Code']) for error in errores])
-            self.ErrMsg = '\n'.join(self.Errores)
-        if 'Events' in ret:
-            events = ret['Events']
-            self.Eventos = ['%s: %s' % (evt['Evt']['Code'], evt['Evt']['Msg']) for evt in events]
-
     def Conectar(self):
         wsdl = WSFEV1_URL_PROD if self.produccion else WSFEV1_URL_TEST
-        return WebServiceAFIP.Conectar(self, wsdl=wsdl, proxy="", wrapper=None, cacert=None, timeout=30,
-                                       soap_server=None)
+        return WebServiceAFIP.Conectar(self, wsdl=wsdl)
 
     def Dummy(self):
         "Obtener el estado de los servidores de la AFIP"
-        result = self.client.FEDummy()['FEDummyResult']
+        result = self.client.service.FEDummy()['FEDummyResult']
         self.AppServerStatus = result['AppServer']
         self.DbServerStatus = result['DbServer']
         self.AuthServerStatus = result['AuthServer']
         return True
-
-    # los siguientes métodos no están decorados para no limpiar propiedades
 
     def CrearFactura(self, concepto=1, tipo_doc=80, nro_doc="", tipo_cbte=1, punto_vta=0,
                      cbt_desde=0, cbt_hasta=0, imp_total=0.00, imp_tot_conc=0.00, imp_neto=0.00,
@@ -102,14 +84,7 @@ class WSFEv1(WebServiceAFIP):
         self.factura = fact
         return True
 
-    def EstablecerCampoFactura(self, campo, valor):
-        if campo in self.factura or campo in ('fecha_serv_desde', 'fecha_serv_hasta', 'caea', 'fch_venc_cae'):
-            self.factura[campo] = valor
-            return True
-        else:
-            return False
-
-    def AgregarCmpAsoc(self, tipo=1, pto_vta=0, nro=0, **kwarg):
+    def AgregarCmpAsoc(self, tipo=1, pto_vta=0, nro=0):
         "Agrego un comprobante asociado a una factura (interna)"
         cmp_asoc = {'tipo': tipo, 'pto_vta': pto_vta, 'nro': nro}
         self.factura['cbtes_asoc'].append(cmp_asoc)
@@ -122,112 +97,102 @@ class WSFEv1(WebServiceAFIP):
         self.factura['tributos'].append(tributo)
         return True
 
-    def AgregarIva(self, iva_id=0, base_imp=0.0, importe=0.0, **kwarg):
+    def AgregarIva(self, iva_id=0, base_imp=0.0, importe=0.0):
         "Agrego un tributo a una factura (interna)"
         iva = {'iva_id': iva_id, 'base_imp': base_imp, 'importe': importe}
         self.factura['iva'].append(iva)
         return True
 
-    def AgregarOpcional(self, opcional_id=0, valor="", **kwarg):
+    def AgregarOpcional(self, opcional_id=0, valor=""):
         "Agrego un dato opcional a una factura (interna)"
         op = {'opcional_id': opcional_id, 'valor': valor}
         self.factura['opcionales'].append(op)
         return True
 
-    def ObtenerCampoFactura(self, *campos):
-        "Obtener el valor devuelto de AFIP para un campo de factura"
-        # cada campo puede ser una clave string (dict) o una posición (list)
-        ret = self.factura
-        for campo in campos:
-            if isinstance(ret, dict) and isinstance(campo, basestring):
-                ret = ret.get(campo)
-            elif isinstance(ret, list) and len(ret) > campo:
-                ret = ret[campo]
-            else:
-                self.Excepcion = u"El campo %s solicitado no existe" % campo
-                ret = None
-            if ret is None:
-                break
-        return str(ret)
-
     # metodos principales para llamar remotamente a AFIP:
 
     def CAESolicitar(self):
         f = self.factura
-        FeCAEReq = {
-            'FeCabReq': {'CantReg': 1,
-                         'PtoVta': f['punto_vta'],
-                         'CbteTipo': f['tipo_cbte']},
-            'FeDetReq': [{'FECAEDetRequest': {
-                'Concepto': f['concepto'],
-                'DocTipo': f['tipo_doc'],
-                'DocNro': f['nro_doc'],
-                'CbteDesde': f['cbt_desde'],
-                'CbteHasta': f['cbt_hasta'],
-                'CbteFch': f['fecha_cbte'],
-                'ImpTotal': f['imp_total'],
-                'ImpTotConc': f['imp_tot_conc'],
-                'ImpNeto': f['imp_neto'],
-                'ImpOpEx': f['imp_op_ex'],
-                'ImpTrib': f['imp_trib'],
-                'ImpIVA': f['imp_iva'],
-                # Fechas solo se informan si Concepto in (2,3)
-                'FchServDesde': f.get('fecha_serv_desde'),
-                'FchServHasta': f.get('fecha_serv_hasta'),
-                'FchVtoPago': f.get('fecha_venc_pago'),
-                'FchServDesde': f.get('fecha_serv_desde'),
-                'FchServHasta': f.get('fecha_serv_hasta'),
-                'FchVtoPago': f['fecha_venc_pago'],
-                'MonId': f['moneda_id'],
-                'MonCotiz': f['moneda_ctz'],
-                'CbtesAsoc': f['cbtes_asoc'] and [
-                    {'CbteAsoc': {
-                        'Tipo': cbte_asoc['tipo'],
-                        'PtoVta': cbte_asoc['pto_vta'],
-                        'Nro': cbte_asoc['nro']}}
-                    for cbte_asoc in f['cbtes_asoc']] or None,
-                'Tributos': f['tributos'] and [
-                    {'Tributo': {
-                        'Id': tributo['tributo_id'],
-                        'Desc': tributo['desc'],
-                        'BaseImp': tributo['base_imp'],
-                        'Alic': tributo['alic'],
-                        'Importe': tributo['importe'],
-                    }}
-                    for tributo in f['tributos']] or None,
-                'Iva': f['iva'] and [
-                    {'AlicIva': {
-                        'Id': iva['iva_id'],
-                        'BaseImp': iva['base_imp'],
-                        'Importe': iva['importe'],
-                    }}
-                    for iva in f['iva']] or None,
-                'Opcionales': [
-                                  {'Opcional': {
-                                      'Id': opcional['opcional_id'],
-                                      'Valor': opcional['valor'],
-                                  }} for opcional in f['opcionales']] or None,
-            }
-            }]
-        }
-        ret = self.client.FECAESolicitar(
-            Auth={'Token': self.Token, 'Sign': self.Sign, 'Cuit': self.Cuit},
-            FeCAEReq=FeCAEReq)
-        print "!!!!!!!!!!!!RET:" + str(ret)
-        result = ret['FECAESolicitarResult']
-        if 'FeCabResp' in result:
-            fecabresp = result['FeCabResp']
-            fedetresp = result['FeDetResp'][0]['FECAEDetResponse']
-            if 'Errors' in result or 'Observaciones' in fedetresp:
-                for error in result.get('Errors', []):
-                    self.Errores.append({'code': error['Err']['Code'], 'msg': error['Err']['Msg'].encode('latin-1')})
-                for obs in fedetresp.get('Observaciones', []):
-                    print obs
-                    self.Observaciones.append({'code': obs['Obs']['Code'], 'msg': obs['Obs']['Msg'].encode('latin-1')})
-            self.Resultado = fecabresp['Resultado']
-            self.CAE = fedetresp['CAE'] and str(fedetresp['CAE']) or ""
-            self.Vencimiento = fedetresp['CAEFchVto'] or ""
-        return self.CAE
+        Auth = self.client.factory.create("FEAuthRequest")
+        Auth.Token = self.Token
+        Auth.Sign = self.Sign
+        Auth.Cuit = self.Cuit  # YA esta sin guiones
+
+        FeCAEReq = self.client.factory.create("FECAERequest")
+
+        FeCabReq = self.client.factory.create("FECAECabRequest")
+        FeCabReq.CantReg = 1
+        FeCabReq.PtoVta = f['punto_vta']
+        FeCabReq.CbteTipo = f['tipo_cbte']
+
+        FeCAEReq.FeCabReq = FeCabReq
+
+        FeDetReq = self.client.factory.create(
+            "ArrayOfFECAEDetRequest")  # Array de detalles de comprobantes (FECAEDetRequest)
+
+        FECAEDetRequest = self.client.factory.create("FECAEDetRequest")
+        FECAEDetRequest.Concepto = f['concepto']
+        FECAEDetRequest.DocTipo = f['tipo_doc']
+        FECAEDetRequest.DocNro = f['nro_doc']
+        FECAEDetRequest.CbteDesde = f['cbt_desde']
+        FECAEDetRequest.CbteHasta = f['cbt_hasta']
+        FECAEDetRequest.CbteFch = f['fecha_cbte']
+        FECAEDetRequest.ImpTotal = f['imp_total']
+        FECAEDetRequest.ImpTotConc = f['imp_tot_conc']
+        FECAEDetRequest.ImpNeto = f['imp_neto']
+        FECAEDetRequest.ImpOpEx = f['imp_op_ex']
+        FECAEDetRequest.ImpTrib = f['imp_trib']
+        FECAEDetRequest.ImpIVA = f['imp_iva']
+        FECAEDetRequest.FchServDesde = f.get('fecha_serv_desde')
+        FECAEDetRequest.FchServHasta = f.get('fecha_serv_hasta')
+        FECAEDetRequest.FchVtoPago = f.get('fecha_venc_pago')
+        FECAEDetRequest.MonId = f['moneda_id']
+        FECAEDetRequest.MonCotiz = f['moneda_ctz']
+
+        CbtesAsoc = self.client.factory.create("ArrayOfCbteAsoc")
+        FECAEDetRequest.CbtesAsoc = CbtesAsoc
+
+        Tributos = self.client.factory.create("ArrayOfTributo")
+        FECAEDetRequest.Tributos = Tributos
+
+        Iva = self.client.factory.create("ArrayOfAlicIva")
+        for i in f['iva']:
+            AlicIva = self.client.factory.create("AlicIva")
+            AlicIva.Id = i['iva_id']
+            AlicIva.BaseImp = i['base_imp']
+            AlicIva.Importe = i['importe']
+            Iva.AlicIva.append(AlicIva)
+        FECAEDetRequest.Iva = Iva
+
+        Opcionales = self.client.factory.create("ArrayOfOpcional")
+        FECAEDetRequest.Opcionales = Opcionales
+
+        FeDetReq.FECAEDetRequest.append(FECAEDetRequest)
+
+        FeCAEReq.FeDetReq = FeDetReq
+
+        FECAEResponse = self.client.service.FECAESolicitar(Auth=Auth,FeCAEReq=FeCAEReq)
+
+        if "FeDetResp" in FECAEResponse:
+            self.Resultado = FECAEResponse.FeDetResp.FECAEDetResponse[0].Resultado
+            if self.Resultado == 'R':
+                pass
+            elif self.Resultado == 'A':
+                self.CAE = FECAEResponse.FeDetResp.FECAEDetResponse[0].CAE
+                self.Vencimiento = FECAEResponse.FeDetResp.FECAEDetResponse[0].CAEFchVto
+
+            if 'Observaciones' in FECAEResponse.FeDetResp.FECAEDetResponse[0]:
+                for obs in FECAEResponse.FeDetResp.FECAEDetResponse[0].Observaciones.Obs:
+                    obser = {'code': obs.Code, 'msg': obs.Msg.encode('latin-1')}
+                    self.Observaciones.append(obser)
+
+        if "Errors" in FECAEResponse:
+            for error in FECAEResponse.Errors.Err:
+                err = {'code': error.Code, 'msg': error.Msg.encode('latin-1')}
+                self.Errores.append(err)
+            return False
+
+        return True
 
     def CompTotXRequest(self):
         ret = self.client.FECompTotXRequest(
@@ -262,7 +227,6 @@ class WSFEv1(WebServiceAFIP):
         if 'ResultGet' in result:
             resultget = result['ResultGet']
             return resultget
-
 
     def ParamGetTiposCbte(self, sep="|"):
         "Recuperador de valores referenciales de códigos de Tipos de Comprobantes"
