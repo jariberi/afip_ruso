@@ -6,7 +6,6 @@ Según RG 2485/08, RG 2757/2010, RG 2904/2010 y RG2926/10 (CAE anticipado),
 RG 3067/2011 (RS - Monotributo), RG 3571/2013 (Responsables inscriptos IVA), 
 RG 3668/2014 (Factura A IVA F.8001), RG 3749/2015 (R.I. y exentos)
 """
-import logging
 
 from wsaa import obtener_o_crear_permiso
 from base import WebServiceAFIP

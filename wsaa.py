@@ -6,7 +6,6 @@
 import random
 import datetime
 from datetime import timedelta
-from django.utils.timezone import now
 import xml.etree.ElementTree as et
 from suds import WebFault
 import email, os, sys, warnings

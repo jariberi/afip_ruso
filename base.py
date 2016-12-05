@@ -1,6 +1,5 @@
 # -*- coding: utf8 -*-
 from suds.client import Client
-import sys
 __author__ = "Jorge Riberi <jariberi@gmail.com>"
 
 class WebServiceAFIP:
