@@ -4,7 +4,7 @@ __author__ = 'JORGE RIBERI'
 
 
 class AFIP_RUSO:
-    _public_methods_ = ['getToken', 'getSign', 'crearFactura', 'agregarIVA', 'aprobar', 'getErrores', 'getObservaciones', 'setCUIT', 'setProduccion']
+    _public_methods_ = ['getToken', 'getSign', 'crearFactura', 'agregarIva', 'aprobar', 'getErrores', 'getObservaciones', 'setCUIT', 'setProduccion']
     _public_attrs_ = ['CAE', 'vencimiento', 'aprobado']
     _reg_progid_ = "AFIP_RUSO"
     _reg_clsid_ = "{13CA094F-068E-446E-A0C9-4938263E5F8E}"
