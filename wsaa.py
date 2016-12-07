@@ -28,9 +28,9 @@ WSAAURL_PROD = "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl"  # PRODUCCIO
 WSAAURL_TEST = "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl"  # homologacion (pruebas)
 
 
-CERT_FILE_PROD = "C:\bases\produccion.crt"
-CERT_FILE_TEST = "C:\bases\test.crt"
-PRIVATE_KEY_FILE = "C:\bases\key.key"
+CERT_FILE_PROD = "C:/bases/produccion.crt"
+CERT_FILE_TEST = "C:/bases/test.crt"
+PRIVATE_KEY_FILE = "C:/bases/key.key"
 # No debería ser necesario modificar nada despues de esta linea
 
 def create_tra(service=SERVICE, ttl=2400):
