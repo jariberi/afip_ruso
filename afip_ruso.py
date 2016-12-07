@@ -30,12 +30,12 @@ class AFIP_RUSO:
         return self.wsfev1.Token
 
     def getErrores(self):
-        return reduce(lambda x, y: str(x['code']) + ";" + str(x['msg']) + ";" + str(y['code']) + ";" + str(y['msg']),
-                      self.wsfev1.Errores)
+        return str(reduce(lambda x, y: str(x['code']) + ";" + str(x['msg']) + ";" + str(y['code']) + ";" + str(y['msg']),
+                      self.wsfev1.Errores))
 
     def getObservaciones(self):
-        return reduce(lambda x, y: str(x['code']) + ";" + str(x['msg']) + ";" + str(y['code']) + ";" + str(y['msg']),
-                      self.wsfev1.Observaciones)
+        return str(reduce(lambda x, y: str(x['code']) + ";" + str(x['msg']) + ";" + str(y['code']) + ";" + str(y['msg']),
+                      self.wsfev1.Observaciones))
 
     def crearFactura(self, concepto=None, tipo_doc=None, nro_doc=None, tipo_cbte=None,
                      punto_vta=None, cbt_desde=None, cbt_hasta=None, imp_total=None,
