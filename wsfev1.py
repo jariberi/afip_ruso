@@ -25,6 +25,7 @@ class WSFEv1(WebServiceAFIP):
         WebServiceAFIP.__init__(self, produccion=produccion)
         self.produccion = produccion
         self.Cuit = cuit
+        self.CAE = self.Vencimiento = ""
         if not self.Token or self.Sign:
             permiso = obtener_o_crear_permiso(produccion=produccion)
             if permiso[0]:
