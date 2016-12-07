@@ -21,9 +21,10 @@ class WSFEv1(WebServiceAFIP):
     # Variables globales para WebServiceAFIP:
     factura = None
 
-    def __init__(self, produccion=False):
+    def __init__(self, produccion=False, cuit=None):
         WebServiceAFIP.__init__(self, produccion=produccion)
         self.produccion = produccion
+        self.Cuit = cuit
         if not self.Token or self.Sign:
             permiso = obtener_o_crear_permiso(produccion=produccion)
             if permiso[0]:

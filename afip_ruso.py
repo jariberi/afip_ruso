@@ -42,7 +42,7 @@ class AFIP_RUSO:
                      imp_tot_conc=None, imp_neto=None, imp_iva=None,
                      fecha_cbte=None, fecha_venc_pago=None, fecha_serv_hasta=None,
                      moneda_id=None, moneda_ctz=None):
-        self.wsfev1 = WSFEv1(produccion=self.produccion)
+        self.wsfev1 = WSFEv1(produccion=self.produccion, cuit=self.CUIT)
         self.wsfev1.CrearFactura(concepto=concepto, tipo_doc=tipo_doc, nro_doc=nro_doc, tipo_cbte=tipo_cbte,
                                  punto_vta=punto_vta, cbt_desde=cbt_desde, cbt_hasta=cbt_hasta, imp_total=imp_total,
                                  imp_tot_conc=imp_tot_conc, imp_neto=imp_neto, imp_iva=imp_iva, fecha_cbte=fecha_cbte,
