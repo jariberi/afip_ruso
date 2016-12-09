@@ -222,7 +222,7 @@ class WSFEv1(WebServiceAFIP):
         return result['RegXReq']
 
     def CompUltimoAutorizado(self, tipo_cbte, punto_vta):
-        ret = self.client.FECompUltimoAutorizado(
+        ret = self.client.service.FECompUltimoAutorizado(
             Auth={'Token': self.Token, 'Sign': self.Sign, 'Cuit': self.Cuit},
             PtoVta=punto_vta,
             CbteTipo=tipo_cbte,
