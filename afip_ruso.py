@@ -4,7 +4,8 @@ __author__ = 'JORGE RIBERI'
 
 
 class AFIP_RUSO:
-    _public_methods_ = ['getToken', 'getSign', 'crearFactura', 'agregarIva', 'aprobar', 'getErrores', 'getObservaciones', 'setCUIT', 'setProduccion']
+    _public_methods_ = ['getToken', 'getSign', 'crearFactura', 'agregarIva', 'aprobar', 'getErrores',
+                        'getObservaciones', 'setCUIT', 'setProduccion', 'consultarUltimoComprobante']
     _public_attrs_ = ['CAE', 'vencimiento', 'aprobado']
     _reg_progid_ = "AFIP_RUSO"
     _reg_clsid_ = "{13CA094F-068E-446E-A0C9-4938263E5F8E}"
@@ -30,12 +31,18 @@ class AFIP_RUSO:
         return self.wsfev1.Token
 
     def getErrores(self):
-        return str(reduce(lambda x, y: str(x['code']) + ";" + str(x['msg']) + ";" + str(y['code']) + ";" + str(y['msg']),
-                      self.wsfev1.Errores))
+        if self.wsfev1.Errores:
+            return str(
+                reduce(lambda x, y: str(x['code']) + ";" + str(x['msg']) + ";" + str(y['code']) + ";" + str(y['msg']),
+                       self.wsfev1.Errores))
+        return ""
 
     def getObservaciones(self):
-        return str(reduce(lambda x, y: str(x['code']) + ";" + str(x['msg']) + ";" + str(y['code']) + ";" + str(y['msg']),
-                      self.wsfev1.Observaciones))
+        if self.wsfev1.Observaciones:
+            return str(
+                reduce(lambda x, y: str(x['code']) + ";" + str(x['msg']) + ";" + str(y['code']) + ";" + str(y['msg']),
+                       self.wsfev1.Observaciones))
+        return ""
 
     def crearFactura(self, concepto=None, tipo_doc=None, nro_doc=None, tipo_cbte=None,
                      punto_vta=None, cbt_desde=None, cbt_hasta=None, imp_total=None,
@@ -73,6 +80,7 @@ class AFIP_RUSO:
         return self.wsfev1.CompUltimoAutorizado(tipo_cbte=tipo_cbte, punto_vta=punto_vta)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     import win32com.server.register
+
     win32com.server.register.UseCommandLine(AFIP_RUSO)

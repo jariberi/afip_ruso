@@ -209,7 +209,8 @@ class WSFEv1(WebServiceAFIP):
                 err = {'code': error.Code, 'msg': error.Msg.encode('latin-1')}
                 self.Errores.append(err)
             return False
-
+        self.q.write("Errores: " + self.Errores)
+        self.q.write("Observaciones: " + self.Observaciones)
         return True
 
     def CompTotXRequest(self):
