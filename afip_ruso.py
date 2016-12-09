@@ -75,8 +75,7 @@ class AFIP_RUSO:
             return False
 
     def consultarUltimoComprobante(self, tipo_cbte, punto_vta):
-        if not self.wsfev1.client:
-            self.wsfev1.Conectar()
+        self.wsfev1.Conectar()
         return self.wsfev1.CompUltimoAutorizado(tipo_cbte=tipo_cbte, punto_vta=punto_vta)
 
 
