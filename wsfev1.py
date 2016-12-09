@@ -20,6 +20,7 @@ class WSFEv1(WebServiceAFIP):
     "Interfaz para el WebService de Factura Electrónica Version 1 - 2.5"
     # Variables globales para WebServiceAFIP:
     factura = None
+    q = open("wsfev1.txt", "w")
 
     def __init__(self, produccion=False, cuit=None):
         WebServiceAFIP.__init__(self, produccion=produccion)
@@ -32,6 +33,9 @@ class WSFEv1(WebServiceAFIP):
                 self.Token = permiso[1].Token
                 self.Sign = permiso[1].Sign
                 self.ExpirationTime = permiso[1].ExpirationTime
+                self.q.write("TOKEN: %s\n" %str(self.Token))
+                self.q.write("SIGN: %s\n" % str(self.Sign))
+                self.q.write("Exp Time: %s\n" % str(self.ExpirationTime))
         self.Errores = self.Observaciones = self.Eventos = []
 
     def resetearOperacion(self):
@@ -45,6 +49,7 @@ class WSFEv1(WebServiceAFIP):
 
     def Conectar(self):
         wsdl = WSFEV1_URL_PROD if self.produccion else WSFEV1_URL_TEST
+        self.q.write("WSDL WSFEV1: %s\n" % str(wsdl))
         return WebServiceAFIP.Conectar(self, wsdl=wsdl)
 
     def Dummy(self):
@@ -172,7 +177,12 @@ class WSFEv1(WebServiceAFIP):
 
         FeCAEReq.FeDetReq = FeDetReq
 
-        FECAEResponse = self.client.service.FECAESolicitar(Auth=Auth,FeCAEReq=FeCAEReq)
+        self.q.write("XML-Auth: %s\n" % str(Auth))
+        self.q.write("XML-FeCAEReq: %s\n" % str(FeCAEReq))
+
+        FECAEResponse = self.client.service.FECAESolicitar(Auth=Auth, FeCAEReq=FeCAEReq)
+
+        self.q.write("XML-FECAEResponse: %s\n" % str(FECAEResponse))
 
         if "FeDetResp" in FECAEResponse:
             self.Resultado = FECAEResponse.FeDetResp.FECAEDetResponse[0].Resultado
