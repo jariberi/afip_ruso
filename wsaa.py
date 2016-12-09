@@ -160,12 +160,15 @@ def obtener_o_crear_permiso(ttl=120, servicio="wsfe", produccion=False):  ##Ruso
     q.write("KEY: %s\n" % PRIVATE_KEY_FILE)
     q.write("CMS: %s\n" % cms)
     if wsaa.Conectar():
+        q.write("Conectado con WSAA")
         if wsaa.LoginCMS(cms):
             q.write("XML: %s\n" % wsaa.xml)
             q.write("SIGN: %s\n" % wsaa.Sign)
             q.write("TOKEN: %s\n" % wsaa.Token)
             return True, wsaa
         else:
+            q.write("NO respondio WSAA")
             return False, wsaa
     else:
+        q.write("NO SE CONECTTO con WSAA")
         return False, wsaa
