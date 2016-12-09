@@ -116,6 +116,7 @@ def sign_tra(tra, cert=None, privatekey=None, passphrase=""):
 
 class WSAA(WebServiceAFIP):
     "Interfaz para el WebService de Autenticación y Autorización"
+    q = open("wsaa.txt", "w")
 
     def __init__(self, produccion=False):
         WebServiceAFIP.__init__(self, produccion)
@@ -131,8 +132,7 @@ class WSAA(WebServiceAFIP):
 
     def Conectar(self):
         wsdl = WSAAURL_PROD if self.produccion else WSAAURL_TEST
-        q = open("wsaa.txt", "w")
-        q.write("WSDL WSAA: " + wsdl)
+        self.q.write("WSDL WSAA: " + wsdl)
         return WebServiceAFIP.Conectar(self, wsdl=wsdl)
 
     def LoginCMS(self, cms):
@@ -146,7 +146,9 @@ class WSAA(WebServiceAFIP):
             return True
         except WebFault, e:
             self.excCode = e.fault.faultcode
+            self.q.write(self.excCode + "\n")
             self.excMsg = e.fault.faultstring
+            self.q.write(self.excMsg + "\n")
             return False
 
 
@@ -162,15 +164,15 @@ def obtener_o_crear_permiso(ttl=120, servicio="wsfe", produccion=False):  ##Ruso
     q.write("KEY: %s\n" % PRIVATE_KEY_FILE)
     q.write("CMS: %s\n" % cms)
     if wsaa.Conectar():
-        q.write("Conectado con WSAA")
+        q.write("Conectado con WSAA\n")
         if wsaa.LoginCMS(cms):
             q.write("XML: %s\n" % wsaa.xml)
             q.write("SIGN: %s\n" % wsaa.Sign)
             q.write("TOKEN: %s\n" % wsaa.Token)
             return True, wsaa
         else:
-            q.write("NO respondio WSAA")
+            q.write("NO respondio WSAA\n")
             return False, wsaa
     else:
-        q.write("NO SE CONECTTO con WSAA")
+        q.write("NO SE CONECTTO con WSAA\n")
         return False, wsaa
