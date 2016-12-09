@@ -27,10 +27,11 @@ SERVICE = "wsfe"  # El nombre del web service al que se le pide el TA
 WSAAURL_PROD = "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl"  # PRODUCCION!!!
 WSAAURL_TEST = "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl"  # homologacion (pruebas)
 
-
 CERT_FILE_PROD = "C:/bases/produccion.crt"
 CERT_FILE_TEST = "C:/bases/test.crt"
 PRIVATE_KEY_FILE = "C:/bases/key.key"
+
+
 # No debería ser necesario modificar nada despues de esta linea
 
 def create_tra(service=SERVICE, ttl=2400):
@@ -48,7 +49,8 @@ def create_tra(service=SERVICE, ttl=2400):
     # tra.header.addChild('destination','cn=wsaahomo,o=afip,c=ar,serialNumber=CUIT 33693450239')
     et.SubElement(header, 'uniqueId').text = str(random.randint(0, 999999))
     # header.add_child('uniqueId', str(long((time.time()*1000))))
-    et.SubElement(header, 'generationTime').text = (datetime.datetime.now() - timedelta(seconds=120)).strftime("%Y-%m-%dT%H:%M:%S")
+    et.SubElement(header, 'generationTime').text = (datetime.datetime.now() - timedelta(seconds=120)).strftime(
+        "%Y-%m-%dT%H:%M:%S")
     # tra.header.add_child('generationTime', str(date('c', date('U') - ttl)))
     et.SubElement(header, 'expirationTime').text = (datetime.datetime.now() + timedelta(seconds=ttl)).strftime(
         "%Y-%m-%dT%H:%M:%S")
@@ -134,7 +136,8 @@ class WSAA(WebServiceAFIP):
     def LoginCMS(self, cms):
         "Obtener ticket de autorización (TA)"
         try:
-            xml=et.fromstring(self.client.service.loginCms(in0=str(cms)))
+            self.xml = self.client.service.loginCms(in0=str(cms))
+            xml = et.fromstring(self.xml)
             self.Token = xml[1][0].text
             self.Sign = xml[1][1].text
             self.ExpirationTime = xml[0][4].text
@@ -146,14 +149,23 @@ class WSAA(WebServiceAFIP):
 
 
 def obtener_o_crear_permiso(ttl=120, servicio="wsfe", produccion=False):  ##Ruso: Factura electronica
-        wsaa = WSAA(produccion=produccion)
-        tra = wsaa.CreateTRA(service=servicio, ttl=ttl)
-        cert = CERT_FILE_PROD if produccion else CERT_FILE_TEST
-        cms = wsaa.SignTRA(tra, cert=cert, privatekey=PRIVATE_KEY_FILE)
-        if wsaa.Conectar():
-            if wsaa.LoginCMS(cms):
-                return True, wsaa
-            else:
-                return False, wsaa
+    q = open("C:/logfe.txt", "w")
+    q.write("TEST\n")
+    wsaa = WSAA(produccion=produccion)
+    tra = wsaa.CreateTRA(service=servicio, ttl=ttl)
+    q.write("TRA: %s\n" % tra)
+    cert = CERT_FILE_PROD if produccion else CERT_FILE_TEST
+    q.write("CERT: %s\n" % cert)
+    cms = wsaa.SignTRA(tra, cert=cert, privatekey=PRIVATE_KEY_FILE)
+    q.write("KEY: %s\n" % PRIVATE_KEY_FILE)
+    q.write("CMS: %s\n" % cms)
+    if wsaa.Conectar():
+        if wsaa.LoginCMS(cms):
+            q.write("XML: %s\n" % wsaa.xml)
+            q.write("SIGN: %s\n" % wsaa.Sign)
+            q.write("TOKEN: %s\n" % wsaa.Token)
+            return True, wsaa
         else:
             return False, wsaa
+    else:
+        return False, wsaa
