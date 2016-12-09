@@ -187,7 +187,14 @@ class WSFEv1(WebServiceAFIP):
         if "FeDetResp" in FECAEResponse:
             self.Resultado = FECAEResponse.FeDetResp.FECAEDetResponse[0].Resultado
             if self.Resultado == 'R':
-                pass
+                if "Errors" in FECAEResponse:
+                    for error in FECAEResponse.Errors.Err:
+                        err = {'code': error.Code, 'msg': error.Msg.encode('latin-1')}
+                        self.Errores.append(err)
+                if 'Observaciones' in FECAEResponse.FeDetResp.FECAEDetResponse[0]:
+                    for obs in FECAEResponse.FeDetResp.FECAEDetResponse[0].Observaciones.Obs:
+                        obser = {'code': obs.Code, 'msg': obs.Msg.encode('latin-1')}
+                        self.Observaciones.append(obser)
             elif self.Resultado == 'A':
                 self.CAE = FECAEResponse.FeDetResp.FECAEDetResponse[0].CAE
                 self.Vencimiento = FECAEResponse.FeDetResp.FECAEDetResponse[0].CAEFchVto
@@ -220,13 +227,11 @@ class WSFEv1(WebServiceAFIP):
             CbteTipo=tipo_cbte,
         )
 
-        result = ret['FECompUltimoAutorizadoResult']
-        self.CbteNro = result['CbteNro']
-        self.__analizar_errores(result)
-        return self.CbteNro is not None and str(self.CbteNro) or ''
+        self.q.write("XML-UltCompAutorizado:\n%s\n" %str(ret))
+        return True
 
     def CompConsultar(self, tipo_cbte, punto_vta, cbte_nro):
-        ret = self.client.FECompConsultar(
+        ret = self.client.service.FECompConsultar(
             Auth={'Token': self.Token, 'Sign': self.Sign, 'Cuit': self.Cuit},
             FeCompConsReq={
                 'CbteTipo': tipo_cbte,

@@ -67,6 +67,12 @@ class AFIP_RUSO:
             self.observaciones = self.wsfev1.Observaciones
             return False
 
+    def consultarUltimoComprobante(self, tipo_cbte, punto_vta):
+        if not self.wsfev1.client:
+            self.wsfev1.Conectar()
+        return self.wsfev1.CompUltimoAutorizado(tipo_cbte=tipo_cbte, punto_vta=punto_vta)
+
+
 if __name__=='__main__':
     import win32com.server.register
     win32com.server.register.UseCommandLine(AFIP_RUSO)
