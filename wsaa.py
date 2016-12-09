@@ -149,7 +149,7 @@ class WSAA(WebServiceAFIP):
 
 
 def obtener_o_crear_permiso(ttl=120, servicio="wsfe", produccion=False):  ##Ruso: Factura electronica
-    q = open("C:/logfe.txt", "w")
+    q = open("logfe.txt", "w")
     q.write("TEST\n")
     wsaa = WSAA(produccion=produccion)
     tra = wsaa.CreateTRA(service=servicio, ttl=ttl)
