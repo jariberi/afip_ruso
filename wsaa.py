@@ -131,6 +131,8 @@ class WSAA(WebServiceAFIP):
 
     def Conectar(self):
         wsdl = WSAAURL_PROD if self.produccion else WSAAURL_TEST
+        q = open("wsaa.txt", "w")
+        q.write("WSDL WSAA: " + wsdl)
         return WebServiceAFIP.Conectar(self, wsdl=wsdl)
 
     def LoginCMS(self, cms):
