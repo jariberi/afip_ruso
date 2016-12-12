@@ -139,6 +139,7 @@ class WSAA(WebServiceAFIP):
         "Obtener ticket de autorización (TA)"
         try:
             self.xml = self.client.service.loginCms(in0=str(cms))
+            self.q.write("XML: %s" % self.xml)
             xml = et.fromstring(self.xml)
             self.Token = xml[1][0].text
             self.Sign = xml[1][1].text
