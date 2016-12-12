@@ -15,7 +15,6 @@ class AFIP_RUSO:
         self.produccion = False
         self.wsfev1 = None
         self.CAE = self.vencimiento = None
-        self.errores = self.observaciones = None
         self.aprobado = None
 
     def setCUIT(self, cuit):
@@ -65,13 +64,10 @@ class AFIP_RUSO:
         if self.wsfev1.CAESolicitar():
             self.CAE = self.wsfev1.CAE
             self.vencimiento = self.wsfev1.Vencimiento
-            self.observaciones = self.wsfev1.Observaciones
             self.aprobado = True
             return True
         else:
             self.aprobado = False
-            self.errores = self.wsfev1.Errores
-            self.observaciones = self.wsfev1.Observaciones
             return False
 
     def consultarUltimoComprobante(self, tipo_cbte, punto_vta):

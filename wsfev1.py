@@ -184,34 +184,29 @@ class WSFEv1(WebServiceAFIP):
 
         self.q.write("XML-FECAEResponse: %s\n" % str(FECAEResponse))
 
+        if "Errors" in FECAEResponse:
+            for error in FECAEResponse.Errors.Err:
+                err = {'code': error.Code, 'msg': error.Msg.encode('latin-1')}
+                self.Errores.append(err)
+            self.q.write("Errores: " + str(self.Errores))
+            return False
+
         if "FeDetResp" in FECAEResponse:
             self.Resultado = FECAEResponse.FeDetResp.FECAEDetResponse[0].Resultado
-            if self.Resultado == 'R':
-                if "Errors" in FECAEResponse:
-                    for error in FECAEResponse.Errors.Err:
-                        err = {'code': error.Code, 'msg': error.Msg.encode('latin-1')}
-                        self.Errores.append(err)
-                if 'Observaciones' in FECAEResponse.FeDetResp.FECAEDetResponse[0]:
-                    for obs in FECAEResponse.FeDetResp.FECAEDetResponse[0].Observaciones.Obs:
-                        obser = {'code': obs.Code, 'msg': obs.Msg.encode('latin-1')}
-                        self.Observaciones.append(obser)
-            elif self.Resultado == 'A':
-                self.CAE = FECAEResponse.FeDetResp.FECAEDetResponse[0].CAE
-                self.Vencimiento = FECAEResponse.FeDetResp.FECAEDetResponse[0].CAEFchVto
 
             if 'Observaciones' in FECAEResponse.FeDetResp.FECAEDetResponse[0]:
                 for obs in FECAEResponse.FeDetResp.FECAEDetResponse[0].Observaciones.Obs:
                     obser = {'code': obs.Code, 'msg': obs.Msg.encode('latin-1')}
                     self.Observaciones.append(obser)
+                self.q.write("Observaciones: " + str(self.Observaciones))
 
-        if "Errors" in FECAEResponse:
-            for error in FECAEResponse.Errors.Err:
-                err = {'code': error.Code, 'msg': error.Msg.encode('latin-1')}
-                self.Errores.append(err)
-            return False
-        self.q.write("Errores: " + str(self.Errores))
-        self.q.write("Observaciones: " + str(self.Observaciones))
-        return True
+            if self.Resultado == 'R':
+                return False
+
+            elif self.Resultado == 'A':
+                self.CAE = FECAEResponse.FeDetResp.FECAEDetResponse[0].CAE
+                self.Vencimiento = FECAEResponse.FeDetResp.FECAEDetResponse[0].CAEFchVto
+                return True
 
     def CompTotXRequest(self):
         ret = self.client.FECompTotXRequest(
