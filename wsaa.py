@@ -27,9 +27,9 @@ SERVICE = "wsfe"  # El nombre del web service al que se le pide el TA
 WSAAURL_PROD = "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl"  # PRODUCCION!!!
 WSAAURL_TEST = "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl"  # homologacion (pruebas)
 
-CERT_FILE_PROD = "C:/bases/produccion.crt"
-CERT_FILE_TEST = "C:/bases/test.crt"
-PRIVATE_KEY_FILE = "C:/bases/key.key"
+CERT_FILE_PROD = "produccion.crt"
+CERT_FILE_TEST = "test.crt"
+PRIVATE_KEY_FILE = "key.key"
 
 
 # No debería ser necesario modificar nada despues de esta linea
